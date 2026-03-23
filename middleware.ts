@@ -1,43 +1,38 @@
-﻿import { createServerClient } from '@supabase/ssr'
-import type { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN ?? 'localhost'
+const PROTECTED  = ['/dashboard']
+const AUTH_PAGES = ['/login', '/signup']
 
-export async function updateSession(
-  request: NextRequest,
-  response: NextResponse
-) {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookieOptions: {
-        domain: COOKIE_DOMAIN,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax' as const,
-        maxAge: 60 * 60 * 24 * 7,
-      },
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(toSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-          toSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          toSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, {
-              ...(options as Record<string, unknown>),
-              domain: COOKIE_DOMAIN,
-              secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax' as const,
-            })
-          )
-        },
-      },
-    }
+function getProjectRef(url: string) {
+  return url.replace('https://', '').split('.')[0]
+}
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  const projectRef = getProjectRef(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
   )
 
-  await supabase.auth.getUser()
-  return response
+  const authCookie =
+    request.cookies.get(`sb-${projectRef}-auth-token`) ??
+    request.cookies.get(`sb-${projectRef}-auth-token.0`)
+
+  const isLoggedIn = !!authCookie
+
+  if (PROTECTED.some((p) => pathname.startsWith(p)) && !isLoggedIn) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
+  if (AUTH_PAGES.some((p) => pathname.startsWith(p)) && isLoggedIn) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
