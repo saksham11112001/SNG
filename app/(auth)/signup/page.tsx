@@ -1,5 +1,4 @@
 'use client'
-// app/(auth)/signup/page.tsx
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -11,50 +10,53 @@ export default function SignupPage() {
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
 
-  const [fullName,  setFullName]  = useState('')
-  const [email,     setEmail]     = useState('')
-  const [password,  setPassword]  = useState('')
-  const [showPass,  setShowPass]  = useState(false)
-  const [loading,   setLoading]   = useState(false)
-  const [done,      setDone]      = useState(false)
-  const [error,     setError]     = useState<string | null>(null)
+  const [fullName, setFullName]   = useState('')
+  const [email,    setEmail]      = useState('')
+  const [password, setPassword]   = useState('')
+  const [showPass, setShowPass]   = useState(false)
+  const [loading,  setLoading]    = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [done,     setDone]       = useState(false)
+  const [error,    setError]      = useState<string | null>(null)
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!fullName || !email || !password) return
     if (password.length < 8) { setError('Password must be at least 8 characters'); return }
-
     setLoading(true)
     setError(null)
-
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email, password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/callback`,
       },
     })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
+    if (error) { setError(error.message); setLoading(false); return }
     setDone(true)
     setLoading(false)
   }
 
-  const passwordStrength = (): { label: string; color: string; width: string } => {
-    if (password.length === 0)  return { label: '',        color: '#1E2240', width: '0%'   }
-    if (password.length < 6)   return { label: 'Weak',     color: '#ef4444', width: '25%'  }
-    if (password.length < 8)   return { label: 'Fair',     color: '#f59e0b', width: '50%'  }
-    if (password.length < 12)  return { label: 'Good',     color: '#6366f1', width: '75%'  }
-    return                             { label: 'Strong',   color: '#10b981', width: '100%' }
+  const handleGoogleSignup = async () => {
+    setGoogleLoading(true)
+    setError(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/callback`,
+        queryParams: { access_type: 'offline', prompt: 'consent' },
+      },
+    })
+    if (error) { setError(error.message); setGoogleLoading(false) }
   }
 
-  const strength = passwordStrength()
+  const strength = (() => {
+    if (password.length === 0) return { label: '', color: '#1E2240', width: '0%' }
+    if (password.length < 6)  return { label: 'Weak',   color: '#ef4444', width: '25%' }
+    if (password.length < 8)  return { label: 'Fair',   color: '#f59e0b', width: '50%' }
+    if (password.length < 12) return { label: 'Good',   color: '#6366f1', width: '75%' }
+    return                           { label: 'Strong', color: '#10b981', width: '100%' }
+  })()
 
   return (
     <div style={{
@@ -76,8 +78,7 @@ export default function SignupPage() {
           <div style={{
             width: '36px', height: '36px',
             background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-            borderRadius: '9px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontFamily: 'Syne, sans-serif', fontWeight: '700', fontSize: '13px', color: 'white',
           }}>SNG</div>
           <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: '600', fontSize: '1.1rem', color: '#f1f5f9' }}>
@@ -94,7 +95,6 @@ export default function SignupPage() {
               </h2>
               <p style={{ color: '#475569', fontSize: '0.875rem', lineHeight: '1.6' }}>
                 We sent a confirmation link to <strong style={{ color: '#94a3b8' }}>{email}</strong>.
-                Click it to activate your account.
               </p>
               <Link href="/login" className="btn-secondary" style={{ marginTop: '1.5rem', width: '100%', justifyContent: 'center' }}>
                 Back to login
@@ -109,16 +109,58 @@ export default function SignupPage() {
               }}>
                 Create your account
               </h1>
-              <p style={{ color: '#475569', fontSize: '0.875rem', marginBottom: '1.75rem' }}>
+              <p style={{ color: '#475569', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
                 One account for Planora and FlowOS
               </p>
+
+              {/* Google Button */}
+              <button
+                onClick={handleGoogleSignup}
+                disabled={googleLoading}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '0.6rem', padding: '0.75rem',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: '10px', cursor: 'pointer',
+                  color: '#f1f5f9', fontSize: '0.9rem', fontWeight: '500',
+                  fontFamily: 'DM Sans, sans-serif',
+                  transition: 'all 0.2s', marginBottom: '1.25rem',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.09)'
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)'
+                  ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'
+                }}
+              >
+                {googleLoading ? (
+                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                    <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                  </svg>
+                )}
+                Continue with Google
+              </button>
+
+              {/* Divider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div style={{ flex: 1, height: '1px', background: '#1E2240' }} />
+                <span style={{ color: '#334155', fontSize: '0.75rem' }}>or sign up with email</span>
+                <div style={{ flex: 1, height: '1px', background: '#1E2240' }} />
+              </div>
 
               <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {error && (
                   <div style={{
                     background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-                    borderRadius: '8px', padding: '0.75rem 1rem',
-                    color: '#f87171', fontSize: '0.85rem',
+                    borderRadius: '8px', padding: '0.75rem 1rem', color: '#f87171', fontSize: '0.85rem',
                   }}>
                     {error}
                   </div>
@@ -128,11 +170,8 @@ export default function SignupPage() {
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '500', color: '#94a3b8', marginBottom: '0.4rem' }}>
                     Full name
                   </label>
-                  <input
-                    type="text" value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="input-field" placeholder="Sachit Gupta"
-                    required autoComplete="name"
+                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
+                    className="input-field" placeholder="Sachit Gupta" required autoComplete="name"
                   />
                 </div>
 
@@ -140,11 +179,8 @@ export default function SignupPage() {
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '500', color: '#94a3b8', marginBottom: '0.4rem' }}>
                     Work email
                   </label>
-                  <input
-                    type="email" value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="input-field" placeholder="you@company.com"
-                    required autoComplete="email"
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                    className="input-field" placeholder="you@company.com" required autoComplete="email"
                   />
                 </div>
 
@@ -153,12 +189,10 @@ export default function SignupPage() {
                     Password
                   </label>
                   <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPass ? 'text' : 'password'}
-                      value={password} onChange={(e) => setPassword(e.target.value)}
-                      className="input-field" placeholder="Min 8 characters"
-                      required autoComplete="new-password"
-                      style={{ paddingRight: '2.5rem' }}
+                    <input type={showPass ? 'text' : 'password'} value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="input-field" placeholder="Min 8 characters" required
+                      autoComplete="new-password" style={{ paddingRight: '2.5rem' }}
                     />
                     <button type="button" onClick={() => setShowPass(!showPass)} style={{
                       position: 'absolute', right: '0.75rem', top: '50%',
@@ -168,7 +202,6 @@ export default function SignupPage() {
                       {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  {/* Strength bar */}
                   {password.length > 0 && (
                     <div style={{ marginTop: '0.4rem' }}>
                       <div style={{ height: '3px', background: '#1E2240', borderRadius: '2px', overflow: 'hidden' }}>
