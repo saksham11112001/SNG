@@ -25,9 +25,20 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false); return }
-    router.push('/dashboard')
-    router.refresh()
+    if (error) {
+  setError(error.message)
+  setLoading(false)
+  return
+}
+
+const params = new URLSearchParams(window.location.search)
+const redirectTo = params.get('redirect')
+if (redirectTo) {
+  window.location.href = redirectTo
+} else {
+  router.push('/dashboard')
+  router.refresh()
+}
   }
 
   const handleMagicLink = async (e: React.FormEvent) => {

@@ -33,8 +33,14 @@ export default function SignupPage() {
       },
     })
     if (error) { setError(error.message); setLoading(false); return }
-    setDone(true)
-    setLoading(false)
+    const params = new URLSearchParams(window.location.search)
+const redirectTo = params.get('redirect')
+if (redirectTo) {
+  window.location.href = redirectTo
+} else {
+  router.push('/dashboard')
+  router.refresh()
+}
   }
 
   const handleGoogleSignup = async () => {
