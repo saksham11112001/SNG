@@ -55,18 +55,26 @@ if (redirectTo) {
     setLoading(false)
   }
 
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true)
-    setError(null)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/callback`,
-        queryParams: { access_type: 'offline', prompt: 'consent' },
-      },
-    })
-    if (error) { setError(error.message); setGoogleLoading(false) }
-  }
+const handleGoogleLogin = async () => {
+  setGoogleLoading(true)
+  setError(null)
+
+  // Carry the ?redirect= param through Google OAuth
+  const params = new URLSearchParams(window.location.search)
+  const redirectTo = params.get('redirect')
+  const callbackUrl = redirectTo
+    ? `${window.location.origin}/callback?redirect=${encodeURIComponent(redirectTo)}`
+    : `${window.location.origin}/callback`
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: callbackUrl,
+      queryParams: { access_type: 'offline', prompt: 'consent' },
+    },
+  })
+  if (error) { setError(error.message); setGoogleLoading(false) }
+}
 
   return (
     <div style={{
