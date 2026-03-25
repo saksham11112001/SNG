@@ -15,9 +15,10 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createSupabaseServerClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
-
     if (!error) {
-      const destination = redirectTo ?? `${origin}${next}`
+      const destination = redirectTo
+        ? decodeURIComponent(redirectTo)
+        : `${origin}${next}`
       return NextResponse.redirect(destination)
     }
   }

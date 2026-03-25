@@ -1,8 +1,7 @@
 'use client'
 // components/dashboard/ProductCard.tsx
 
-import Link from 'next/link'
-import { ArrowRight, Clock, CheckCircle2, XCircle, Pause, ExternalLink } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, Pause, ExternalLink } from 'lucide-react'
 
 interface ProductCardProps {
   name:        string
@@ -23,23 +22,20 @@ export function ProductCard({
   url, plan, status, expiresAt, features,
 }: ProductCardProps) {
 
-  const isAccessible = status === 'active'
-
   const statusConfig = {
-    active:    { icon: <CheckCircle2 size={13} />, label: 'Active',    bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)', text: '#10b981' },
-    trial:     { icon: <Clock size={13} />,        label: 'Trial',     bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)', text: '#f59e0b' },
-    expired:   { icon: <XCircle size={13} />,      label: 'Expired',   bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#ef4444' },
-    cancelled: { icon: <XCircle size={13} />,      label: 'Cancelled', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.25)',  text: '#ef4444' },
-    paused:    { icon: <Pause size={13} />,        label: 'Paused',    bg: 'rgba(100,116,139,0.12)',border: 'rgba(100,116,139,0.25)',text: '#64748b' },
-    null:      { icon: <Clock size={13} />,        label: 'No plan',   bg: 'rgba(100,116,139,0.12)',border: 'rgba(100,116,139,0.25)',text: '#64748b' },
+    active:    { icon: <CheckCircle2 size={13} />, label: 'Active',    bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)',  text: '#10b981' },
+    trial:     { icon: <Clock size={13} />,        label: 'Trial',     bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)',  text: '#f59e0b' },
+    expired:   { icon: <XCircle size={13} />,      label: 'Expired',   bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.25)',   text: '#ef4444' },
+    cancelled: { icon: <XCircle size={13} />,      label: 'Cancelled', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.25)',   text: '#ef4444' },
+    paused:    { icon: <Pause size={13} />,        label: 'Paused',    bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)', text: '#64748b' },
+    null:      { icon: <Clock size={13} />,        label: 'No plan',   bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.25)', text: '#64748b' },
   }
 
-  // Pick config — show trial badge if plan is 'trial' and status is 'active'
-  const configKey = plan === 'trial' && status === 'active' ? 'trial'
+  const configKey = plan === 'trial' && status === 'active'
+    ? 'trial'
     : (status ?? 'null')
   const sc = statusConfig[configKey as keyof typeof statusConfig] ?? statusConfig.null
 
-  // Days remaining for trials
   const daysLeft = expiresAt
     ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
     : null
@@ -47,32 +43,24 @@ export function ProductCard({
   return (
     <div
       className="card"
-      style={{
-        padding:    '2rem',
-        opacity:    isAccessible ? 1 : 0.6,
-        transition: 'transform 0.2s, box-shadow 0.2s',
-      }}
+      style={{ padding: '2rem', transition: 'transform 0.2s, box-shadow 0.2s' }}
       onMouseEnter={(e) => {
-        if (!isAccessible) return
         const el = e.currentTarget as HTMLDivElement
-        el.style.transform  = 'translateY(-3px)'
-        el.style.boxShadow  = `0 16px 48px ${glowColor}`
+        el.style.transform = 'translateY(-3px)'
+        el.style.boxShadow = `0 16px 48px ${glowColor}`
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLDivElement
-        el.style.transform  = 'translateY(0)'
-        el.style.boxShadow  = 'none'
+        el.style.transform = 'translateY(0)'
+        el.style.boxShadow = 'none'
       }}
     >
       {/* Top row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <div style={{
           width: '44px', height: '44px',
-          background: glowColor,
-          border: `1px solid ${color}33`,
-          borderRadius: '11px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color,
+          background: glowColor, border: `1px solid ${color}33`,
+          borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center', color,
         }}>
           {icon}
         </div>
@@ -87,12 +75,11 @@ export function ProductCard({
           {sc.icon}
           {plan === 'trial' && status === 'active'
             ? `Trial · ${daysLeft}d left`
-            : `${sc.label} · ${plan.charAt(0).toUpperCase() + plan.slice(1)}`
-          }
+            : `${sc.label} · ${plan.charAt(0).toUpperCase() + plan.slice(1)}`}
         </div>
       </div>
 
-      {/* Name */}
+      {/* Name + description */}
       <h3 style={{
         fontFamily: 'Syne, sans-serif', fontWeight: '700',
         fontSize: '1.4rem', color: '#f8fafc',
@@ -117,48 +104,32 @@ export function ProductCard({
         ))}
       </ul>
 
-      {/* CTA */}
-      {isAccessible ? (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '0.8rem 1.1rem',
-            background: `${color}18`, border: `1px solid ${color}33`,
-            borderRadius: '10px', color, textDecoration: 'none',
-            fontSize: '0.875rem', fontWeight: '500', transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLAnchorElement
-            el.style.background   = `${color}28`
-            el.style.borderColor  = `${color}66`
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLAnchorElement
-            el.style.background   = `${color}18`
-            el.style.borderColor  = `${color}33`
-          }}
-        >
-          <span>Open {name}</span>
-          <ExternalLink size={15} />
-        </a>
-      ) : (
-        <Link
-          href="/upgrade"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '0.8rem 1.1rem',
-            background: 'rgba(255,255,255,0.03)', border: '1px solid #1E2240',
-            borderRadius: '10px', color: '#475569', textDecoration: 'none',
-            fontSize: '0.875rem', fontWeight: '500',
-          }}
-        >
-          <span>Upgrade to access</span>
-          <ArrowRight size={15} />
-        </Link>
-      )}
+      {/* CTA — always opens the product, regardless of plan status */}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', padding: '0.8rem 1.1rem',
+          background: `${color}18`, border: `1px solid ${color}33`,
+          borderRadius: '10px', color, textDecoration: 'none',
+          fontSize: '0.875rem', fontWeight: '500', transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          const el = e.currentTarget as HTMLAnchorElement
+          el.style.background  = `${color}28`
+          el.style.borderColor = `${color}66`
+        }}
+        onMouseLeave={(e) => {
+          const el = e.currentTarget as HTMLAnchorElement
+          el.style.background  = `${color}18`
+          el.style.borderColor = `${color}33`
+        }}
+      >
+        <span>Open {name}</span>
+        <ExternalLink size={15} />
+      </a>
     </div>
   )
 }

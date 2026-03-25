@@ -30,6 +30,15 @@ export default function LoginPage() {
   setLoading(false)
   return
 }
+const handleForgotPassword = async () => {
+  if (!email) { setError('Enter your email first'); return }
+  setLoading(true)
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/callback?next=/reset-password`,
+  })
+  setError(error ? error.message : '✓ Password reset email sent')
+  setLoading(false)
+}
 
 const params = new URLSearchParams(window.location.search)
 const redirectTo = params.get('redirect')
@@ -57,10 +66,7 @@ if (redirectTo) {
 
 const handleGoogleLogin = async () => {
   setGoogleLoading(true)
-  setError(null)
-
-  // Carry the ?redirect= param through Google OAuth
-  const params = new URLSearchParams(window.location.search)
+  const params    = new URLSearchParams(window.location.search)
   const redirectTo = params.get('redirect')
   const callbackUrl = redirectTo
     ? `${window.location.origin}/callback?redirect=${encodeURIComponent(redirectTo)}`
@@ -236,9 +242,9 @@ const handleGoogleLogin = async () => {
                     </button>
                   </div>
                   <div style={{ textAlign: 'right', marginTop: '0.35rem' }}>
-                    <Link href="#" style={{ fontSize: '0.75rem', color: '#475569', textDecoration: 'none' }}>
-                      Forgot password?
-                    </Link>
+                    <button onClick={handleForgotPassword} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'0.75rem', color:'#475569', fontFamily:'DM Sans, sans-serif' }}>
+  Forgot password?
+</button>
                   </div>
                 </div>
               )}
